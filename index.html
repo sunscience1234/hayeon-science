@@ -451,6 +451,7 @@ var API_URL = 'https://script.google.com/macros/s/AKfycbz_0b3xCyQl-pt8388Mp-IhSF
             <div class="form-group"><label>학생 연락처</label><input id="as-phone" type="tel" placeholder="010-0000-0000"></div>
             <div class="form-group"><label>학부모 연락처</label><input id="as-parent" type="tel" placeholder="010-0000-0000"></div>
           </div>
+          <div class="form-group"><label>학교</label><input id="as-school" type="text" placeholder="예: 호평중학교"></div>
           <div class="form-group"><label>수강 과목</label><input id="as-subject" type="text" placeholder="예: 중등과학, 통합과학"></div>
           <div class="form-group"><label>메모</label><input id="as-memo" type="text" placeholder="특이사항"></div>
           <div class="btn-row">
@@ -1679,13 +1680,14 @@ async function doAddStudent(){
   var grade=document.getElementById('as-grade').value;
   var phone=document.getElementById('as-phone').value.trim();
   var parent=document.getElementById('as-parent').value.trim();
+  var school=document.getElementById('as-school').value.trim();
   var subject=document.getElementById('as-subject').value.trim();
   var memo=document.getElementById('as-memo').value.trim();
   if(!name){notify('이름을 입력해주세요.','err');return;}
   try{
-    await fbAdd('students',{name:name,grade:grade,phone:phone,parentPhone:parent,subject:subject,memo:memo,ts:Date.now(),status:'active'});
+    await fbAdd('students',{name:name,grade:grade,phone:phone,parentPhone:parent,school:school,subject:subject,memo:memo,ts:Date.now(),status:'active'});
     notify(name+' 학생이 등록되었어요! ✅');
-    ['as-name','as-phone','as-parent','as-subject','as-memo'].forEach(function(id){document.getElementById(id).value='';});
+    ['as-name','as-phone','as-parent','as-school','as-subject','as-memo'].forEach(function(id){document.getElementById(id).value='';});
     document.getElementById('add-student-form').style.display='none';
     loadAll(true).then(function(){renderMgmt();});
   }catch(e){notify('등록 실패.','err');}
@@ -1778,6 +1780,7 @@ function showStudentDetail(id){
     +'<div style="background:var(--surface2);border-radius:var(--radius);padding:12px;margin-bottom:1.25rem;font-size:13px;display:grid;grid-template-columns:1fr 1fr;gap:8px">'
       +'<div>📱 학생: '+safeStr(s.phone)+'</div>'
       +'<div>👨‍👩‍👧 학부모: '+safeStr(s.parentPhone)+'</div>'
+      +'<div>🏫 학교: '+safeStr(s.school||'-')+'</div>'
       +'<div>📚 과목: '+safeStr(s.subject)+'</div>'
       +'<div>📅 등록일: '+fmt(s.ts)+'</div>'
       +(s.memo?'<div style="grid-column:1/-1">📌 '+s.memo+'</div>':'')
