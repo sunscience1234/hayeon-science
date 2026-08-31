@@ -28,15 +28,22 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script>
-  firebase.initializeApp({
-    apiKey: "AIzaSyADODrl28UeAVjigyXBx-7C9M4BUr6VmW8",
-    authDomain: "hayeon-science.firebaseapp.com",
-    projectId: "hayeon-science",
-    storageBucket: "hayeon-science.firebasestorage.app",
-    messagingSenderId: "831446588599",
-    appId: "1:831446588599:web:0d2ea0afd2627c2f41c132"
-  });
-  var db = firebase.firestore();
+  var db;
+  try {
+    firebase.initializeApp({
+      apiKey: "AIzaSyADODrl28UeAVjigyXBx-7C9M4BUr6VmW8",
+      authDomain: "hayeon-science.firebaseapp.com",
+      projectId: "hayeon-science",
+      storageBucket: "hayeon-science.firebasestorage.app",
+      messagingSenderId: "831446588599",
+      appId: "1:831446588599:web:0d2ea0afd2627c2f41c132"
+    });
+    db = firebase.firestore();
+    // 오프라인 지원 비활성화 (캐시 문제 방지)
+    db.settings({experimentalForceLongPolling: true, merge: true});
+  } catch(e) {
+    console.error('Firebase 초기화 실패:', e);
+  }
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
@@ -509,20 +516,25 @@ function showLoading(v){ document.getElementById('loading-overlay').classList.to
 function waitFirebase(){return Promise.resolve();}
 
 async function fbGetAll(col){
+  if(!db)throw new Error('Firebase 연결 안됨');
   var snap=await db.collection(col).orderBy('ts','desc').get();
   return snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
 }
 async function fbAdd(col,data){
+  if(!db)throw new Error('Firebase 연결 안됨');
   var ref=await db.collection(col).add(data);
   return ref.id;
 }
 async function fbUpdate(col,id,data){
+  if(!db)throw new Error('Firebase 연결 안됨');
   await db.collection(col).doc(id).update(data);
 }
 async function fbDelete(col,id){
+  if(!db)throw new Error('Firebase 연결 안됨');
   await db.collection(col).doc(id).delete();
 }
 async function fbArrayUnion(col,id,field,val){
+  if(!db)throw new Error('Firebase 연결 안됨');
   var update={};
   update[field]=firebase.firestore.FieldValue.arrayUnion(val);
   await db.collection(col).doc(id).update(update);
@@ -662,12 +674,12 @@ function compressImg(file,cb){
         c.getContext('2d').drawImage(img,0,0,w,h);
         return c.toDataURL('image/jpeg',quality);
       }
-      // 글씨가 선명하게 보이도록 고화질 우선
-      var b64=tryCompress(1200,0.85);
-      if(b64.length>45000)b64=tryCompress(1000,0.75);
-      if(b64.length>45000)b64=tryCompress(800,0.65);
-      if(b64.length>45000)b64=tryCompress(600,0.55);
-      if(b64.length>45000)b64=tryCompress(400,0.45);
+      // 문제 사진은 글씨가 보여야 하므로 고화질 유지
+      var b64=tryCompress(1600,0.92);
+      if(b64.length>900000)b64=tryCompress(1400,0.88);
+      if(b64.length>900000)b64=tryCompress(1200,0.85);
+      if(b64.length>900000)b64=tryCompress(1000,0.80);
+      if(b64.length>900000)b64=tryCompress(800,0.75);
       cb(b64);
     };
     img.onerror=function(){notify('이미지를 읽을 수 없어요.','err');};
